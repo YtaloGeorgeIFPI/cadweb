@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block titulo_conteudo %}
+    Detalhes da Categoria: {{ categoria.nome }}
+{% endblock %}
+
+{% block conteudo %}
+    <h1>Detalhes da Categoria: {{ categoria.nome }}</h1>
+    <p><strong>ID:</strong> {{ categoria.id }}</p>
+    <p><strong>Descrição:</strong> {{ categoria.descricao }}</p>
+    <p><strong>Ordem:</strong> {{ categoria.ordem }}</p>
+    
+    <!-- Botões de navegação -->
+    <a href="{% url 'categoria' %}" class="btn btn-primary">Voltar para a Listagem</a>
+    <a href="{% url 'editar_categoria' categoria.id %}" class="btn btn-warning">Editar</a>
+    <a href="{% url 'remover_categoria' categoria.id %}" class="btn btn-danger" 
+       onclick="return confirm('Tem certeza que deseja remover esta categoria?');">Excluir</a>
+{% endblock %}
