@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block titulo_conteudo %}
+    <h1>Lista de Clientes</h1>
+{% endblock %}
+
+{% block conteudo %}
+    <a href="{% url 'form_cliente' %}" class="btn btn-primary">Adicionar Novo Cliente</a>
+
+    <table class="table mt-4">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>C.P.F.</th>
+                <th>Data de Nascimento</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cliente in lista %}
+                <tr>
+                    <td>{{ cliente.nome }}</td>
+                    <td>{{ cliente.cpf }}</td>
+                    <td>{{ cliente.datanascimento }}</td>
+                    <td>
+                        <!-- Botão "Novo Pedido" com a cor padrão -->
+                        <a href="#" class="btn btn-info btn-sm">Novo Pedido</a> <!-- Atualizado para a cor padrão -->
+                        <a href="{% url 'editar_cliente' cliente.id %}" class="btn btn-warning btn-sm">Editar</a>
+                        <a href="{% url 'remover_cliente' cliente.id %}" class="btn btn-danger btn-sm">Remover</a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="4">Nenhum cliente encontrado.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

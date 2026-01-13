@@ -1,14 +1,14 @@
 {% extends 'base.html' %}
 
 {% block titulo_conteudo %}
-    Listagem de Categoria
+    <h1>Listagem de Categorias</h1>
 {% endblock %}
 
 {% block conteudo %}
-    <button onclick="location.href='{% url "form_categoria" %}'" class="btn btn-primary">Nova Categoria</button>
-    <button onclick="location.href='' " class="btn btn-primary">Recarregar</button>
+    <button onclick="location.href='/categoria/form'" class="btn btn-primary">Nova Categoria</button>
+    <button onclick="location.href='/categoria/'" class="btn btn-primary">Recarregar</button>
 
-    <table style="margin-top:15px" class="table table-bordered table-hover">
+    <table class="table mt-4">
         <thead class="thead-dark">
             <tr>
                 <th scope="col">ID</th>
@@ -17,27 +17,29 @@
                 <th scope="col">Ações</th>  
             </tr>
         </thead>
-        
         <tbody>
-            {% for item in lista %}
+            {% for categoria in lista %}
                 <tr>
-                    <td>{{ item.id }}</td>
-                    <td>{{ item.nome }}</td>
-                    <td>{{ item.ordem }}</td>
+                    <td>{{ categoria.id }}</td>
+                    <td>{{ categoria.nome }}</td>
+                    <td>{{ categoria.ordem }}</td>
                     <td> 
                         <!-- Botão de Detalhes -->
-                        <button onclick="location='{% url "detalhes_categoria" item.id %}'" class="btn btn-info">Detalhes</button>
+                        <button onclick="location='/categoria/detalhes/{{ categoria.id }}'" class="btn btn-info btn-sm">Detalhes</button>
                         
                         <!-- Botão de Alterar -->
-                        <button onclick="location='{% url "editar_categoria" item.id %}'" class="btn btn-warning">Alterar</button>
+                        <button onclick="location='/categoria/editar/{{ categoria.id }}'" class="btn btn-warning btn-sm">Alterar</button>
 
                         <!-- Botão de Excluir -->
-                        <a href="{% url 'remover_categoria' item.id %}" class="btn btn-danger" 
+                        <a href="/categoria/remover/{{ categoria.id }}" class="btn btn-danger btn-sm" 
                            onclick="return confirm('Tem certeza que deseja remover este registro?');">Excluir</a>
                     </td> 
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="4">Nenhuma categoria encontrada.</td>
                 </tr>
             {% endfor %}
         </tbody>
     </table>
-
 {% endblock %}
