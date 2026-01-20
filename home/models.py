@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.exceptions import ValidationError
 
 class Categoria(models.Model):
     nome = models.CharField(max_length=100, unique=True)  # Garantir que o nome da categoria seja único
@@ -37,3 +38,19 @@ class Produto(models.Model):
         # Verifique se 'preco' é None e defina um valor padrão ou lance um erro
         if self.preco is None or self.preco <= 0:
             raise ValidationError({'preco': 'O preço deve ser maior que zero.'})
+
+    @property
+    def estoque(self):
+        """
+        Tenta buscar o estoque associado ao produto. Se não existir, cria um novo estoque com quantidade 0.
+        """
+        estoque_item, flag_created = Estoque.objects.get_or_create(produto=self, defaults={'qtde': 0})
+        return estoque_item
+
+
+class Estoque(models.Model):
+    produto = models.ForeignKey(Produto, on_delete=models.CASCADE)
+    qtde = models.IntegerField()
+
+    def __str__(self):
+        return f'{self.produto.nome} - Quantidade: {self.qtde}'

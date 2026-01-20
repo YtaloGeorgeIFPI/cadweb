@@ -64,20 +64,27 @@ class ClienteForm(forms.ModelForm):
 class ProdutoForm(forms.ModelForm):
     class Meta:
         model = Produto
-        fields = ['nome', 'preco', 'categoria', 'img_base64']
+        fields = ['nome', 'preco', 'categoria','img_base64']
         widgets = {
-            'nome': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nome do Produto'}),
-            'preco': forms.NumberInput(attrs={'class': 'form-control money', 'placeholder': 'Preço do Produto'}),
             'categoria': forms.Select(attrs={'class': 'form-control'}),
-            'img_base64': forms.ClearableFileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
+            'nome':forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nome'}),
+            'img_base64': forms.HiddenInput(), 
+            # a classe money mascara a entreda de valores monetários, está em base.html
+            #  jQuery Mask Plugin
+            'preco':forms.TextInput(attrs={
+                'class': 'money form-control',
+                'maxlength': 500,
+                'placeholder': '0.000,00'
+            }),
+        }
+        
+        labels = {
+            'nome': 'Nome do Produto',
+            'preco': 'Preço do Produto',
         }
 
-    def clean_preco(self):
-        preco = self.cleaned_data.get('preco')
-        try:
-            preco = float(preco)
-            if preco <= 0:
-                raise forms.ValidationError("O preço deve ser maior que zero.")
-        except ValueError:
-            raise forms.ValidationError("Insira um preço válido.")
-        return preco
+
+    def __init__(self, *args, **kwargs):
+        super(ProdutoForm, self).__init__(*args, **kwargs)
+        self.fields['preco'].localize = True
+        self.fields['preco'].widget.is_localized = True   

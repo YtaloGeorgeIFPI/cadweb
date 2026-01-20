@@ -1,7 +1,7 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 
 {% block titulo_conteudo %}
-    <h1>Lista de Produtos</h1>
+    <h1>Listagem de Produtos</h1>
 {% endblock %}
 
 {% block conteudo %}
@@ -12,6 +12,7 @@
         <thead class="thead-dark">
             <tr>
                 <th scope="col">ID</th>
+                <th scope="col">Imagem</th> <!-- Nova coluna para imagem -->
                 <th scope="col">Nome</th>
                 <th scope="col">Preço (R$)</th>
                 <th scope="col">Categoria</th>
@@ -22,20 +23,25 @@
             {% for produto in produtos %}
                 <tr>
                     <td>{{ produto.id }}</td>
+                    <td>
+                        {% if produto.img_base64 %}
+                            <img src="data:image/png;base64,{{ produto.img_base64 }}" width="50" height="50">  <!-- Ajuste o tamanho conforme necessário -->
+                        {% else %}
+                            <img src="/static/default-image.png" width="50" height="50">  <!-- Imagem padrão se não houver base64 -->
+                        {% endif %}
+                    </td>
                     <td>{{ produto.nome }}</td>
-                    <td>{{ produto.preco|floatformat:2 }}</td>  <!-- Exibe o preço com 2 casas decimais -->
+                    <td>{{ produto.preco|floatformat:2 }}</td>
                     <td>{{ produto.categoria.nome }}</td>
                     <td>
-                        <!-- Botões com cores diferenciadas -->
                         <a href="{% url 'detalhes_produto' produto.id %}" class="btn btn-info btn-sm">Detalhes</a>
                         <a href="{% url 'editar_produto' produto.id %}" class="btn btn-warning btn-sm">Editar</a>
-                        <a href="{% url 'remover_produto' produto.id %}" class="btn btn-danger btn-sm" 
-                           onclick="return confirm('Tem certeza que deseja remover este produto?');">Remover</a>
+                        <a href="{% url 'remover_produto' produto.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Tem certeza que deseja remover este produto?');">Remover</a>
                     </td>
                 </tr>
             {% empty %}
                 <tr>
-                    <td colspan="5">Nenhum produto encontrado.</td>
+                    <td colspan="6">Nenhum produto encontrado.</td>
                 </tr>
             {% endfor %}
         </tbody>
