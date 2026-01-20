@@ -1,13 +1,89 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
-{% block titulo_conteudo %}
-    <h1>{% if form.instance.pk %}Editar Produto{% else %}Novo Produto{% endif %}</h1>
-{% endblock %}
+{% block titulo_conteudo %} Formulário de Produtos {% endblock titulo_conteudo %}
 
-{% block conteudo %}
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit" class="btn btn-primary">Salvar Produto</button>
-    </form>
-{% endblock %}
+{% block conteudo %} 
+
+<form method="post">
+    {% csrf_token %}    
+
+    {{ form.as_p }}
+
+    <p>
+        <label>Categoria:</label>
+
+        <!-- Campo visível -->
+        <input type="text" 
+            class="form-control" 
+            id="id_categoria_nome" 
+            data-url="{% url 'buscar_dados' 'home.Categoria' %}" 
+            data-hidden="#id_categoria"
+            autocomplete="off">
+
+        <!-- Campo hidden que guarda o ID -->
+        <input type="hidden" name="categoria" id="id_categoria">
+    </p>
+
+    <fieldset class="fieldset">
+        <label>Imagem:</label>
+
+        <input type="hidden" 
+            id="img_base64"  
+            class="img_init" 
+            data-canvas="imageCanvas" 
+            value="{{form.instance.img_base64}}" 
+            name="img_base64">
+
+        <input type="file" 
+            id="imagem" 
+            name="imagem" 
+            data-hidden="img_base64" 
+            class="img_upload form-control" 
+            accept="image/*"><br>
+
+        <canvas class="canvas" id="imageCanvas" width="200" height="200"></canvas><br>
+    </fieldset>
+
+    <br>
+
+    <button class="btn btn-primary btn-sm" type="submit">Salvar</button>
+
+</form>
+
+{% endblock conteudo %}
+
+{% block javascript %}
+<script>
+$(document).ready(function() {
+
+    // ATIVA O AUTOCOMPLETE
+    autoComplete("#id_categoria_nome");
+
+    // ======== IMAGEM ========
+    $('.img_init').each(function() {
+        const initialImageBase64 = $(this).val();
+        const target_canvas = $(this).data('canvas');
+        if (initialImageBase64) {
+            loadImage(initialImageBase64, target_canvas);
+        }
+    });
+
+    $('.img_upload').on('change', function(event) {
+        const imagemInput = this.files[0];
+        var hidden = $(this).data('hidden');
+
+        if (imagemInput) {
+            const reader = new FileReader();
+            reader.readAsDataURL(imagemInput);
+
+            reader.onload = function() {
+                const imgBase64 = reader.result;
+                $('#' + hidden).val(imgBase64);
+                var canvasTarget = $('#' + hidden).data('canvas');
+                loadImage(imgBase64, canvasTarget);
+            };
+        }
+    });
+});
+</script>
+{% endblock javascript %}

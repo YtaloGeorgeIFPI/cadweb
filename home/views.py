@@ -3,6 +3,10 @@ from django.contrib import messages
 from .models import Categoria, Cliente, Produto  # Certifique-se de importar o modelo Produto
 from .forms import CategoriaForm, ClienteForm, ProdutoForm, EstoqueForm  # Adicione ProdutoForm aqui
 
+from django.apps import apps
+from django.http import JsonResponse
+
+
 from django.shortcuts import render, get_object_or_404
 from .models import Produto
 
@@ -36,6 +40,21 @@ def form_categoria(request):
         form = CategoriaForm()
     contexto = {'form': form}
     return render(request, 'categoria/formulario.html', contexto)
+
+def buscar_dados(request, app_modelo):
+    termo = request.GET.get('q', '')
+
+    try:
+        app, modelo = app_modelo.split('.')
+        Modelo = apps.get_model(app, modelo)
+    except LookupError:
+        return JsonResponse({'error': 'Modelo não encontrado'}, status=404)
+
+    resultados = Modelo.objects.filter(nome__icontains=termo)
+
+    dados = [{'id': obj.id, 'nome': obj.nome} for obj in resultados]
+
+    return JsonResponse(dados, safe=False)
 
 def editar_categoria(request, id):
     try:
@@ -159,3 +178,12 @@ def ajustar_estoque(request, id):
     else:
          form = EstoqueForm(instance=estoque)
     return render(request, 'produto/estoque.html', {'form': form,})
+
+def teste1(request):
+     return render(request, 'testes/teste1.html')
+
+def teste2(request):
+    return HttpResponse("Página teste 2")
+
+
+

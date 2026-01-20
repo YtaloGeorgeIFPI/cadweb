@@ -30,5 +30,9 @@ urlpatterns = [
     # Remover Produto
     path('produto/remover/<int:id>/', views.remover_produto, name='remover_produto'),
     path('produto/ajustar_estoque/<int:id>/', views.ajustar_estoque, name='ajustar_estoque'),
+    #url
+    path('teste1/', views.teste1, name='teste1'),
+    path('teste2/', views.teste2, name='teste2'),
+    path('buscar_dados/<str:app_modelo>/',views.buscar_dados, name='buscar_dados'),
 
 ]
