@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from .models import Categoria, Cliente, Produto  # Certifique-se de importar o modelo Produto
-from .forms import CategoriaForm, ClienteForm, ProdutoForm  # Adicione ProdutoForm aqui
+from .forms import CategoriaForm, ClienteForm, ProdutoForm, EstoqueForm  # Adicione ProdutoForm aqui
 
 from django.shortcuts import render, get_object_or_404
 from .models import Produto
@@ -145,3 +145,17 @@ def remover_produto(request, id):
     produto = Produto.objects.get(id=id)
     produto.delete()
     return redirect('produto')
+
+def ajustar_estoque(request, id):
+    produto = produto = Produto.objects.get(pk=id)
+    estoque = produto.estoque # pega o objeto estoque relacionado ao produto
+    if request.method == 'POST':
+        form = EstoqueForm(request.POST, instance=estoque)
+        if form.is_valid():
+            estoque = form.save()
+            lista = []
+            lista.append(estoque.produto) 
+            return render(request, 'produto/lista.html', {'lista': lista})
+    else:
+         form = EstoqueForm(instance=estoque)
+    return render(request, 'produto/estoque.html', {'form': form,})
