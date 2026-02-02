@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+
+{% block titulo_conteudo %} Isso é um teste 3 {% endblock titulo_conteudo %}
+
+
+{% block conteudo %} 
+
+
+<p>
+    <label for="id_categoria_nome">Categoria:</label>
+    <!-- autocomplete -->
+    <input type="text" class="form-control autocomplete" 
+        id="id_categoria_nome" 
+        data-url="{% url 'buscar_dados' 'home.Categoria' %}" 
+        data-hidden="#id_categoria" >
+    <input type="hidden" id="id_categoria">
+</p>
+
+
+
+
+{% endblock conteudo %}
+
+
+{% block javascript %}
+
+
+
+
+
+
+{% endblock javascript %}

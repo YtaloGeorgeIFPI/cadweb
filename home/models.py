@@ -1,17 +1,19 @@
 from django.db import models
 from django.core.exceptions import ValidationError
+import base64
+from io import BytesIO
+from PIL import Image
 
 class Categoria(models.Model):
-    nome = models.CharField(max_length=100, unique=True)  # Garantir que o nome da categoria seja único
+    nome = models.CharField(max_length=100, unique=True)
     ordem = models.IntegerField()
 
     def __str__(self):
         return self.nome
 
-
 class Cliente(models.Model):
     nome = models.CharField(max_length=100)
-    cpf = models.CharField(max_length=15, verbose_name="C.P.F", unique=True)  # Garantir que o CPF seja único
+    cpf = models.CharField(max_length=15, verbose_name="C.P.F", unique=True)
     datanasc = models.DateField(verbose_name="Data de Nascimento")
 
     def __str__(self):
@@ -19,7 +21,6 @@ class Cliente(models.Model):
 
     @property
     def datanascimento(self):
-        """Retorna a data de nascimento no formato DD/MM/AAAA"""
         if self.datanasc:
             return self.datanasc.strftime('%d/%m/%Y')
         return None
@@ -29,15 +30,32 @@ class Produto(models.Model):
     nome = models.CharField(max_length=100)
     preco = models.DecimalField(max_digits=10, decimal_places=2, blank=False, null=True)  # Permitindo null
     categoria = models.ForeignKey('Categoria', on_delete=models.CASCADE)
-    img_base64 = models.TextField(blank=True)
+    imagem = models.ImageField(upload_to='produtos/', blank=True, null=True)  # Novo campo para imagem
+    img_base64 = models.TextField(blank=True)  # Campo base64 para imagem
 
     def __str__(self):
         return self.nome
 
     def clean(self):
-        # Verifique se 'preco' é None e defina um valor padrão ou lance um erro
         if self.preco is None or self.preco <= 0:
             raise ValidationError({'preco': 'O preço deve ser maior que zero.'})
+
+    def save(self, *args, **kwargs):
+        if self.imagem:
+            # Converte a imagem para Base64 ao salvar
+            self.img_base64 = self.convert_to_base64(self.imagem)
+        super().save(*args, **kwargs)
+
+    def convert_to_base64(self, image):
+        """
+        Converte uma imagem para string Base64.
+        """
+        img = Image.open(image)
+        img_io = BytesIO()
+        img.save(img_io, format='PNG')
+        img_io.seek(0)
+        img_str = base64.b64encode(img_io.read()).decode()
+        return img_str
 
     @property
     def estoque(self):

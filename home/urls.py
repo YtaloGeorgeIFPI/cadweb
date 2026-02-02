@@ -19,20 +19,17 @@ urlpatterns = [
     path('cliente/remover/<int:id>/', views.remover_cliente, name='remover_cliente'),  # Remove um cliente
 
     # Rotas para produto
-    # Listagem de Produtos
-    path('produto/', views.produto, name='produto'),
-    # Formulário de Produtos
-    path('produto/form', views.form_produto, name='form_produto'),
-    # Detalhes do Produto
-    path('produto/detalhes/<int:id>/', views.detalhes_produto, name='detalhes_produto'),
-    # Editar Produto
-    path('produto/editar/<int:id>/', views.editar_produto, name='editar_produto'),
-    # Remover Produto
-    path('produto/remover/<int:id>/', views.remover_produto, name='remover_produto'),
+    path('produto/', views.produto, name='produto'),  # Listagem de Produtos
+    path('produto/form', views.form_produto, name='form_produto'),  # Formulário de Produtos
+    path('produto/detalhes/<int:id>/', views.detalhes_produto, name='detalhes_produto'),  # Detalhes do Produto
+    path('produto/editar/<int:id>/', views.editar_produto, name='editar_produto'),  # Editar Produto
+    path('produto/remover/<int:id>/', views.remover_produto, name='remover_produto'),  # Remover Produto
     path('produto/ajustar_estoque/<int:id>/', views.ajustar_estoque, name='ajustar_estoque'),
-    #url
+
+    # Rotas de teste
     path('teste1/', views.teste1, name='teste1'),
     path('teste2/', views.teste2, name='teste2'),
-    path('buscar_dados/<str:app_modelo>/',views.buscar_dados, name='buscar_dados'),
 
+    # Rota para buscar dados (autocomplete ou pesquisa dinâmica)
+    path('buscar_dados/<str:app_modelo>/',views.buscar_dados, name='buscar_dados'),
 ]

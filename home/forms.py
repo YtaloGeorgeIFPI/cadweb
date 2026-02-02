@@ -64,20 +64,16 @@ class ClienteForm(forms.ModelForm):
 class ProdutoForm(forms.ModelForm):
     class Meta:
         model = Produto
-        fields = ['nome', 'preco', 'categoria', 'img_base64']
+        fields = ['nome', 'preco', 'categoria', 'img_base64']  # Inclui 'categoria' como campo visível
 
         widgets = {
-            # Campo oculto para armazenar apenas o ID da categoria
+           # 'categoria': forms.Select(attrs={'class': 'form-control'}),  # Usando o campo Select para exibir a categoria visível
             'categoria': forms.HiddenInput(),
-
             'nome': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Nome'
             }),
-
             'img_base64': forms.HiddenInput(),
-
-            # jQuery Mask Plugin (base.html)
             'preco': forms.TextInput(attrs={
                 'class': 'money form-control',
                 'maxlength': 500,
@@ -94,12 +90,15 @@ class ProdutoForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['preco'].localize = True
         self.fields['preco'].widget.is_localized = True
+        
+
+# Formulário para Estoque
 class EstoqueForm(forms.ModelForm):
     class Meta:
         model = Estoque
         fields = ['produto','qtde']
-        
+
         widgets = {
             'produto': forms.HiddenInput(),  # Campo oculto para armazenar o ID do produto
-            'qtde':forms.TextInput(attrs={'class': 'inteiro form-control',}),
-    }
+            'qtde': forms.TextInput(attrs={'class': 'inteiro form-control'}),
+        }

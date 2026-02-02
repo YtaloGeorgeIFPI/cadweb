@@ -5,9 +5,7 @@ from .forms import CategoriaForm, ClienteForm, ProdutoForm, EstoqueForm  # Adici
 
 from django.apps import apps
 from django.http import JsonResponse
-
-
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import get_object_or_404
 from .models import Produto
 
 def detalhes_produto(request, id):
@@ -16,8 +14,6 @@ def detalhes_produto(request, id):
     
     # Passa o produto para o template
     return render(request, 'produto/detalhes.html', {'produto': produto})
-
-
 
 # Funções para Categoria
 def index(request):
@@ -42,18 +38,20 @@ def form_categoria(request):
     return render(request, 'categoria/formulario.html', contexto)
 
 def buscar_dados(request, app_modelo):
-    termo = request.GET.get('q', '')
-
+    termo = request.GET.get('q', '') # pega o termo digitado
     try:
+        # Divida o app e o modelo
         app, modelo = app_modelo.split('.')
-        Modelo = apps.get_model(app, modelo)
+        modelo = apps.get_model(app, modelo)
     except LookupError:
         return JsonResponse({'error': 'Modelo não encontrado'}, status=404)
-
-    resultados = Modelo.objects.filter(nome__icontains=termo)
-
+    
+    # Verifica se o modelo possui os campos 'nome' e 'id'
+    if not hasattr(modelo, 'nome') or not hasattr(modelo, 'id'):
+        return JsonResponse({'error': 'Modelo deve ter campos "id" e "nome"'}, status=400)
+    
+    resultados = modelo.objects.filter(nome__icontains=termo)
     dados = [{'id': obj.id, 'nome': obj.nome} for obj in resultados]
-
     return JsonResponse(dados, safe=False)
 
 def editar_categoria(request, id):
@@ -139,7 +137,7 @@ def produto(request):
 # Formulário para criar um novo produto
 def form_produto(request):
     if request.method == 'POST':
-        form = ProdutoForm(request.POST)
+        form = ProdutoForm(request.POST, request.FILES)  # Certifique-se de incluir request.FILES
         if form.is_valid():
             form.save()
             return redirect('produto')
@@ -151,7 +149,7 @@ def form_produto(request):
 def editar_produto(request, id):
     produto = Produto.objects.get(id=id)
     if request.method == 'POST':
-        form = ProdutoForm(request.POST, instance=produto)
+        form = ProdutoForm(request.POST, request.FILES, instance=produto)  # Adicionar request.FILES
         if form.is_valid():
             form.save()
             return redirect('produto')
@@ -166,24 +164,21 @@ def remover_produto(request, id):
     return redirect('produto')
 
 def ajustar_estoque(request, id):
-    produto = produto = Produto.objects.get(pk=id)
-    estoque = produto.estoque # pega o objeto estoque relacionado ao produto
+    produto = Produto.objects.get(pk=id)
+    estoque = produto.estoque  # pega o objeto estoque relacionado ao produto
     if request.method == 'POST':
         form = EstoqueForm(request.POST, instance=estoque)
         if form.is_valid():
             estoque = form.save()
             lista = []
-            lista.append(estoque.produto) 
+            lista.append(estoque.produto)
             return render(request, 'produto/lista.html', {'lista': lista})
     else:
-         form = EstoqueForm(instance=estoque)
-    return render(request, 'produto/estoque.html', {'form': form,})
+        form = EstoqueForm(instance=estoque)
+    return render(request, 'produto/estoque.html', {'form': form})
 
 def teste1(request):
      return render(request, 'testes/teste1.html')
 
 def teste2(request):
     return HttpResponse("Página teste 2")
-
-
-
