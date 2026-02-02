@@ -32,4 +32,7 @@ urlpatterns = [
 
     # Rota para buscar dados (autocomplete ou pesquisa dinâmica)
     path('buscar_dados/<str:app_modelo>/',views.buscar_dados, name='buscar_dados'),
+    path('pedido/', views.pedido, name='pedido'),
+    path('pedido/form/<int:id>', views.novo_pedido, name='novo_pedido'),
+    path('pedido/detalhes/<int:id>/', views.detalhes_pedido, name='detalhes_pedido'),
 ]

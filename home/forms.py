@@ -1,5 +1,5 @@
 from django import forms
-from .models import Categoria, Cliente, Produto, Estoque  # Certifique-se de importar os modelos Categoria, Cliente e Produto
+from .models import Categoria, Cliente, Produto, Estoque, Pedido, ItemPedido  # Certifique-se de importar os modelos Categoria, Cliente e Produto
 from datetime import date  # Importando o módulo date para comparar com a data atual
 
 # Formulário para Categoria
@@ -101,4 +101,25 @@ class EstoqueForm(forms.ModelForm):
         widgets = {
             'produto': forms.HiddenInput(),  # Campo oculto para armazenar o ID do produto
             'qtde': forms.TextInput(attrs={'class': 'inteiro form-control'}),
+        }
+
+
+class PedidoForm(forms.ModelForm):
+    class Meta:
+        model = Pedido
+        fields = ['cliente']
+        widgets = {
+            'cliente': forms.HiddenInput(),  # Campo oculto para armazenar o ID
+        }
+
+class ItemPedidoForm(forms.ModelForm):
+    class Meta:
+        model = ItemPedido
+        fields = ['pedido','produto', 'qtde']
+
+
+        widgets = {
+            'pedido': forms.HiddenInput(),  # Campo oculto para armazenar o ID
+            'produto': forms.HiddenInput(),  # Campo oculto para armazenar o ID
+            'qtde':forms.TextInput(attrs={'class': 'form-control',}),
         }

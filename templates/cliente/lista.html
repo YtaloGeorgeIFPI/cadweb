@@ -23,8 +23,16 @@
                     <td>{{ cliente.cpf }}</td>
                     <td>{{ cliente.datanascimento }}</td>
                     <td>
+                    
+                        
+
+                        
                         <!-- Botão "Novo Pedido" com a cor padrão -->
-                        <a href="#" class="btn btn-info btn-sm">Novo Pedido</a> <!-- Atualizado para a cor padrão -->
+                                 <button 
+                                    onClick="location='{% url 'novo_pedido' cliente.id  %}'" 
+                                    type="button" class="btn btn-primary btn-sm">Novo Pedido
+                                </button>
+                                
                         <a href="{% url 'editar_cliente' cliente.id %}" class="btn btn-warning btn-sm">Editar</a>
                         <a href="{% url 'remover_cliente' cliente.id %}" class="btn btn-danger btn-sm">Remover</a>
                     </td>
