@@ -1,16 +1,19 @@
 {% extends "base.html" %}
 
 {% block titulo_conteudo %}
-    <h1>Listagem de Pedidos</h1>
+    <h1 class="mb-4">📋 Listagem de Pedidos</h1>
 {% endblock titulo_conteudo %}
 
 {% block conteudo %}
 
-<div class="barrabotoes mb-3">
-  <button onClick="location='{% url "pedido" %}'" type="button" class="btn btn-primary btn-sm">Recarregar</button>
+<div class="mb-3">
+  <button onClick="location='{% url "pedido" %}'" 
+          type="button" class="btn btn-outline-primary btn-sm">
+      🔄 Recarregar
+  </button>
 </div>
 
-<table class="table table-hover table-striped">
+<table class="table table-hover table-striped align-middle shadow-sm">
     <thead class="table-dark">
       <tr>
         <th>ID</th>
@@ -21,7 +24,7 @@
         <th>Total do Pedido (R$)</th>
         <th>Total Pago (R$)</th>
         <th>Débito Restante (R$)</th>
-        <th>Ações</th>
+        <th class="text-center">Ações</th>
       </tr>
     </thead>
     <tbody>
@@ -30,36 +33,41 @@
         <td>{{ pedido.id }}</td>
         <td>{{ pedido.cliente.nome }}</td>
         <td>{{ pedido.data_pedidof }}</td>
-        <td>{{ pedido.get_status_display }}</td>
+        <td><span class="badge bg-secondary">{{ pedido.get_status_display }}</span></td>
         <td>
           {% for item in pedido.itempedido_set.all %}
             {{ item.produto.nome }} ({{ item.qtde }})<br>
           {% empty %}
-            Nenhum produto
+            <span class="text-muted">Nenhum produto</span>
           {% endfor %}
         </td>
-        <td>R$ {{ pedido.total }}</td>
+        <td><strong>R$ {{ pedido.total }}</strong></td>
         <td>R$ {{ pedido.total_pago }}</td>
-        <td>R$ {{ pedido.debito }}</td>
-        <td>
+        <td class="text-danger">R$ {{ pedido.debito }}</td>
+        <td class="text-center">
           <!-- Botão Detalhes -->
-          <button onClick="location='{% url 'detalhes_pedido' pedido.id %}'" 
-                  type="button" class="btn btn-primary btn-sm">Detalhes</button>
+          <a href="{% url 'detalhes_pedido' pedido.id %}" 
+             class="btn btn-sm btn-outline-primary me-1">
+             <i class="fas fa-info-circle"></i> Detalhes
+          </a>
           
           <!-- Botão Nota Fiscal -->
           <a href="{% url 'nota_fiscal' pedido.id %}" target="_blank" 
-             class="btn btn-info btn-sm">Nota Fiscal</a>
+             class="btn btn-sm btn-outline-success me-1">
+             <i class="fas fa-file-invoice"></i> Nota Fiscal
+          </a>
           
           <!-- Botão Remover Pedido -->
-          <a href="{% url 'remover_pedido' pedido.id %}" class="btn btn-danger btn-sm"
+          <a href="{% url 'remover_pedido' pedido.id %}" 
+             class="btn btn-sm btn-outline-danger"
              onclick="return confirm('Tem certeza que deseja remover este pedido?');">
-             Remover
+             <i class="fas fa-trash-alt"></i> Remover
           </a>
         </td>
       </tr>
     {% empty %}
       <tr>
-        <td colspan="9" class="text-center">Nenhum pedido encontrado.</td>
+        <td colspan="9" class="text-center text-muted">Nenhum pedido encontrado.</td>
       </tr>
     {% endfor %}
     </tbody>
