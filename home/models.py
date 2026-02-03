@@ -4,12 +4,14 @@ import base64
 from io import BytesIO
 from PIL import Image
 
+
 class Categoria(models.Model):
     nome = models.CharField(max_length=100, unique=True)
     ordem = models.IntegerField()
 
     def __str__(self):
         return self.nome
+
 
 class Cliente(models.Model):
     nome = models.CharField(max_length=100)
@@ -28,10 +30,10 @@ class Cliente(models.Model):
 
 class Produto(models.Model):
     nome = models.CharField(max_length=100)
-    preco = models.DecimalField(max_digits=10, decimal_places=2, blank=False, null=True)  # Permitindo null
+    preco = models.DecimalField(max_digits=10, decimal_places=2, blank=False, null=True)
     categoria = models.ForeignKey('Categoria', on_delete=models.CASCADE)
-    imagem = models.ImageField(upload_to='produtos/', blank=True, null=True)  # Novo campo para imagem
-    img_base64 = models.TextField(blank=True)  # Campo base64 para imagem
+    imagem = models.ImageField(upload_to='produtos/', blank=True, null=True)
+    img_base64 = models.TextField(blank=True)
 
     def __str__(self):
         return self.nome
@@ -42,14 +44,10 @@ class Produto(models.Model):
 
     def save(self, *args, **kwargs):
         if self.imagem:
-            # Converte a imagem para Base64 ao salvar
             self.img_base64 = self.convert_to_base64(self.imagem)
         super().save(*args, **kwargs)
 
     def convert_to_base64(self, image):
-        """
-        Converte uma imagem para string Base64.
-        """
         img = Image.open(image)
         img_io = BytesIO()
         img.save(img_io, format='PNG')
@@ -59,10 +57,7 @@ class Produto(models.Model):
 
     @property
     def estoque(self):
-        """
-        Tenta buscar o estoque associado ao produto. Se não existir, cria um novo estoque com quantidade 0.
-        """
-        estoque_item, flag_created = Estoque.objects.get_or_create(produto=self, defaults={'qtde': 0})
+        estoque_item, _ = Estoque.objects.get_or_create(produto=self, defaults={'qtde': 0})
         return estoque_item
 
 
@@ -72,17 +67,13 @@ class Estoque(models.Model):
 
     def __str__(self):
         return f'{self.produto.nome} - Quantidade: {self.qtde}'
-    
 
 
 class Pedido(models.Model):
-
-
     NOVO = 1
     EM_ANDAMENTO = 2
     CONCLUIDO = 3
     CANCELADO = 4
-
 
     STATUS_CHOICES = [
         (NOVO, 'Novo'),
@@ -90,7 +81,6 @@ class Pedido(models.Model):
         (CONCLUIDO, 'Concluído'),
         (CANCELADO, 'Cancelado'),
     ]
-
 
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE)
     produtos = models.ManyToManyField(Produto, through='ItemPedido')
@@ -103,9 +93,13 @@ class Pedido(models.Model):
             return self.data_pedido.strftime('%d/%m/%Y %H:%M')
         return None
 
+    def total(self):
+        """Calcula o valor total do pedido"""
+        return sum(item.subtotal() for item in self.itempedido_set.all())
 
     def __str__(self):
-            return f"Pedido {self.id} - Cliente: {self.cliente.nome} - Status: {self.get_status_display()}"
+        return f"Pedido {self.id} - Cliente: {self.cliente.nome} - Status: {self.get_status_display()}"
+
 
 class ItemPedido(models.Model):
     pedido = models.ForeignKey(Pedido, on_delete=models.CASCADE)
@@ -113,6 +107,9 @@ class ItemPedido(models.Model):
     qtde = models.PositiveIntegerField()
     preco = models.DecimalField(max_digits=10, decimal_places=2)
 
+    def subtotal(self):
+        """Calcula o valor total deste item"""
+        return self.qtde * self.preco
 
     def __str__(self):
-        return f"{self.produto.nome} (Qtd: {self.qtde}) - Preço Unitário: {self.preco}"  
+        return f"{self.produto.nome} (Qtd: {self.qtde}) - Preço Unitário: {self.preco}"

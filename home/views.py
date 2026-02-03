@@ -1,34 +1,24 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from .models import Categoria, Cliente, Produto  # Certifique-se de importar o modelo Produto
-from .forms import CategoriaForm, ClienteForm, ProdutoForm, EstoqueForm  # Adicione ProdutoForm aqui
-
+from django.http import JsonResponse, HttpResponse
 from django.apps import apps
-from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
-from .models import Produto
-from .models import Pedido
-from .forms import PedidoForm
-from .models import ItemPedido
-from .forms import ItemPedidoForm
+
+from .models import Categoria, Cliente, Produto, Pedido, ItemPedido
+from .forms import CategoriaForm, ClienteForm, ProdutoForm, EstoqueForm, PedidoForm, ItemPedidoForm
 
 
-
+# ------------------- PRODUTO -------------------
 def detalhes_produto(request, id):
-    # Recupera o produto com base no ID
     produto = get_object_or_404(Produto, id=id)
-    
-    # Passa o produto para o template
     return render(request, 'produto/detalhes.html', {'produto': produto})
 
-# Funções para Categoria
+
+# ------------------- CATEGORIA -------------------
 def index(request):
     return render(request, 'index.html')
 
 def categoria(request):
-    contexto = {
-        'lista': Categoria.objects.all().order_by('-id'),
-    }
+    contexto = {'lista': Categoria.objects.all().order_by('-id')}
     return render(request, 'categoria/lista.html', contexto)
 
 def form_categoria(request):
@@ -40,45 +30,22 @@ def form_categoria(request):
             return redirect('categoria')
     else:
         form = CategoriaForm()
-    contexto = {'form': form}
-    return render(request, 'categoria/formulario.html', contexto)
-
-def buscar_dados(request, app_modelo):
-    termo = request.GET.get('q', '') # pega o termo digitado
-    try:
-        # Divida o app e o modelo
-        app, modelo = app_modelo.split('.')
-        modelo = apps.get_model(app, modelo)
-    except LookupError:
-        return JsonResponse({'error': 'Modelo não encontrado'}, status=404)
-    
-    # Verifica se o modelo possui os campos 'nome' e 'id'
-    if not hasattr(modelo, 'nome') or not hasattr(modelo, 'id'):
-        return JsonResponse({'error': 'Modelo deve ter campos "id" e "nome"'}, status=400)
-    
-    resultados = modelo.objects.filter(nome__icontains=termo)
-    dados = [{'id': obj.id, 'nome': obj.nome} for obj in resultados]
-    return JsonResponse(dados, safe=False)
+    return render(request, 'categoria/formulario.html', {'form': form})
 
 def editar_categoria(request, id):
-    try:
-        categoria = Categoria.objects.get(pk=id)
-    except Categoria.DoesNotExist:
-        messages.error(request, 'Registro não encontrado')
-        return redirect('categoria')
-
+    categoria = get_object_or_404(Categoria, pk=id)
     if request.method == 'POST':
         form = CategoriaForm(request.POST, instance=categoria)
         if form.is_valid():
-            categoria = form.save()
-            messages.success(request, 'Operação realizada com Sucesso')
+            form.save()
+            messages.success(request, 'Operação realizada com sucesso!')
             return redirect('categoria')
     else:
         form = CategoriaForm(instance=categoria)
     return render(request, 'categoria/formulario.html', {'form': form})
 
 def detalhes_categoria(request, id):
-    categoria = Categoria.objects.get(pk=id)
+    categoria = get_object_or_404(Categoria, pk=id)
     return render(request, 'categoria/detalhes.html', {'categoria': categoria})
 
 def remover_categoria(request, id):
@@ -90,11 +57,25 @@ def remover_categoria(request, id):
         messages.error(request, 'Categoria não encontrada.')
     return redirect('categoria')
 
-# Funções para Cliente
+def buscar_dados(request, app_modelo):
+    termo = request.GET.get('q', '')
+    try:
+        app, modelo = app_modelo.split('.')
+        modelo = apps.get_model(app, modelo)
+    except LookupError:
+        return JsonResponse({'error': 'Modelo não encontrado'}, status=404)
+
+    if not hasattr(modelo, 'nome') or not hasattr(modelo, 'id'):
+        return JsonResponse({'error': 'Modelo deve ter campos "id" e "nome"'}, status=400)
+
+    resultados = modelo.objects.filter(nome__icontains=termo)
+    dados = [{'id': obj.id, 'nome': obj.nome} for obj in resultados]
+    return JsonResponse(dados, safe=False)
+
+
+# ------------------- CLIENTE -------------------
 def cliente(request):
-    contexto = {
-        'lista': Cliente.objects.all().order_by('-id'),
-    }
+    contexto = {'lista': Cliente.objects.all().order_by('-id')}
     return render(request, 'cliente/lista.html', contexto)
 
 def form_cliente(request):
@@ -106,21 +87,15 @@ def form_cliente(request):
             return redirect('cliente')
     else:
         form = ClienteForm()
-    contexto = {'form': form}
-    return render(request, 'cliente/formulario.html', contexto)
+    return render(request, 'cliente/formulario.html', {'form': form})
 
 def editar_cliente(request, id):
-    try:
-        cliente = Cliente.objects.get(pk=id)
-    except Cliente.DoesNotExist:
-        messages.error(request, 'Cliente não encontrado')
-        return redirect('cliente')
-
+    cliente = get_object_or_404(Cliente, pk=id)
     if request.method == 'POST':
         form = ClienteForm(request.POST, instance=cliente)
         if form.is_valid():
-            cliente = form.save()
-            messages.success(request, 'Operação realizada com Sucesso')
+            form.save()
+            messages.success(request, 'Operação realizada com sucesso!')
             return redirect('cliente')
     else:
         form = ClienteForm(instance=cliente)
@@ -135,15 +110,15 @@ def remover_cliente(request, id):
         messages.error(request, 'Cliente não encontrado.')
     return redirect('cliente')
 
-# Funções para Produto
+
+# ------------------- PRODUTO -------------------
 def produto(request):
     produtos = Produto.objects.all()
     return render(request, 'produto/lista.html', {'produtos': produtos})
 
-# Formulário para criar um novo produto
 def form_produto(request):
     if request.method == 'POST':
-        form = ProdutoForm(request.POST, request.FILES)  # Certifique-se de incluir request.FILES
+        form = ProdutoForm(request.POST, request.FILES)
         if form.is_valid():
             form.save()
             return redirect('produto')
@@ -151,11 +126,10 @@ def form_produto(request):
         form = ProdutoForm()
     return render(request, 'produto/formulario.html', {'form': form})
 
-# Editar produto
 def editar_produto(request, id):
-    produto = Produto.objects.get(id=id)
+    produto = get_object_or_404(Produto, id=id)
     if request.method == 'POST':
-        form = ProdutoForm(request.POST, request.FILES, instance=produto)  # Adicionar request.FILES
+        form = ProdutoForm(request.POST, request.FILES, instance=produto)
         if form.is_valid():
             form.save()
             return redirect('produto')
@@ -163,83 +137,166 @@ def editar_produto(request, id):
         form = ProdutoForm(instance=produto)
     return render(request, 'produto/formulario.html', {'form': form})
 
-# Remover produto
 def remover_produto(request, id):
-    produto = Produto.objects.get(id=id)
+    produto = get_object_or_404(Produto, id=id)
     produto.delete()
     return redirect('produto')
 
 def ajustar_estoque(request, id):
-    produto = Produto.objects.get(pk=id)
-    estoque = produto.estoque  # pega o objeto estoque relacionado ao produto
+    produto = get_object_or_404(Produto, pk=id)
+    estoque = produto.estoque
     if request.method == 'POST':
         form = EstoqueForm(request.POST, instance=estoque)
         if form.is_valid():
-            estoque = form.save()
-            lista = []
-            lista.append(estoque.produto)
-            return render(request, 'produto/lista.html', {'lista': lista})
+            form.save()
+            return redirect('produto')
     else:
         form = EstoqueForm(instance=estoque)
     return render(request, 'produto/estoque.html', {'form': form})
 
+
+# ------------------- TESTES -------------------
 def teste1(request):
-     return render(request, 'testes/teste1.html')
+    return render(request, 'testes/teste1.html')
 
 def teste2(request):
     return HttpResponse("Página teste 2")
 
 
+# ------------------- PEDIDO -------------------
 def pedido(request):
-    lista = Pedido.objects.all().order_by('-id')  # Obtém todos os registros
+    lista = Pedido.objects.all().order_by('-id')
     return render(request, 'pedido/lista.html', {'lista': lista})
 
+def novo_pedido(request, id):
+    try:
+        cliente = Cliente.objects.get(pk=id)
+    except Cliente.DoesNotExist:
+        messages.error(request, 'Registro não encontrado')
+        return redirect('cliente')
 
-def novo_pedido(request,id):
-    if request.method == 'GET':
-        try:
-            cliente = Cliente.objects.get(pk=id)
-        except Cliente.DoesNotExist:
-            # Caso o registro não seja encontrado, exibe a mensagem de erro
-            messages.error(request, 'Registro não encontrado')
-            return redirect('cliente')  # Redireciona para a listagem
-        # cria um novo pedido com o cliente selecionado
-        pedido = Pedido(cliente=cliente)
-        form = PedidoForm(instance=pedido)# cria um formulario com o novo pedido
-        return render(request, 'pedido/form.html',{'form': form,})
-    else: # se for metodo post, salva o pedido.
+    if request.method == 'POST':
         form = PedidoForm(request.POST)
         if form.is_valid():
-            pedido = form.save()
+            form.save()
+            messages.success(request, 'Pedido criado com sucesso!')
             return redirect('pedido')
+    else:
+        pedido = Pedido(cliente=cliente)
+        form = PedidoForm(instance=pedido)
 
+    return render(request, 'pedido/form.html', {'form': form})
 
 
 def detalhes_pedido(request, id):
     try:
         pedido = Pedido.objects.get(pk=id)
     except Pedido.DoesNotExist:
-        # Caso o registro não seja encontrado, exibe a mensagem de erro
         messages.error(request, 'Registro não encontrado')
-        return redirect('pedido')  # Redireciona para a listagem    
-    
-    if request.method == 'GET':
+        return redirect('pedido')
+
+    if request.method == 'POST':
+        form = ItemPedidoForm(request.POST)
+        if form.is_valid():
+            item_pedido = form.save(commit=False)
+            item_pedido.pedido = pedido
+            item_pedido.preco = item_pedido.produto.preco  # preço automático
+
+            # 🔹 Tratamento de estoque
+            estoque = item_pedido.produto.estoque
+            if estoque.qtde < item_pedido.qtde:
+                messages.error(request, 'Estoque insuficiente para este produto!')
+            else:
+                estoque.qtde -= item_pedido.qtde
+                estoque.save()
+                item_pedido.save()
+                messages.success(request, 'Item adicionado com sucesso!')
+            return redirect('detalhes_pedido', id=pedido.id)
+        else:
+            messages.error(request, 'Erro ao adicionar produto')
+    else:
         itemPedido = ItemPedido(pedido=pedido)
         form = ItemPedidoForm(instance=itemPedido)
-    else:
-        form = ItemPedidoForm(request.POST)
-        # aguardando implementação POST, salvar item
-    
+
     contexto = {
         'pedido': pedido,
         'form': form,
+        'itens': pedido.itempedido_set.all(),
     }
-    return render(request, 'pedido/detalhes.html',contexto )
+    return render(request, 'pedido/detalhes.html', contexto)
 
 
+def editar_item_pedido(request, id):
+    try:
+        item_pedido = ItemPedido.objects.get(pk=id)
+    except ItemPedido.DoesNotExist:
+        messages.error(request, 'Registro não encontrado')
+        return redirect('pedido')
+
+    pedido = item_pedido.pedido
+    quantidade_anterior = item_pedido.qtde
+
+    if request.method == 'POST':
+        form = ItemPedidoForm(request.POST, instance=item_pedido)
+        if form.is_valid():
+            item_pedido = form.save(commit=False)
+            estoque = item_pedido.produto.estoque
+
+            diferenca = item_pedido.qtde - quantidade_anterior
+            if diferenca > 0 and estoque.qtde < diferenca:
+                messages.error(request, 'Estoque insuficiente para este produto!')
+            else:
+                estoque.qtde -= diferenca
+                estoque.save()
+                item_pedido.preco = item_pedido.produto.preco
+                item_pedido.save()
+                messages.success(request, 'Item atualizado com sucesso!')
+                return redirect('detalhes_pedido', id=pedido.id)
+        else:
+            messages.error(request, 'Erro ao atualizar item do pedido')
+    else:
+        form = ItemPedidoForm(instance=item_pedido)
+
+    contexto = {
+        'pedido': pedido,
+        'form': form,
+        'item_pedido': item_pedido,
+    }
+    return render(request, 'pedido/detalhes.html', contexto)
 
 
+def remover_item_pedido(request, id):
+    try:
+        item_pedido = ItemPedido.objects.get(pk=id)
+    except ItemPedido.DoesNotExist:
+        messages.error(request, 'Item não encontrado')
+        return redirect('pedido')
 
+    pedido = item_pedido.pedido
+    estoque = item_pedido.produto.estoque
 
+    # devolve a quantidade ao estoque
+    estoque.qtde += item_pedido.qtde
+    estoque.save()
 
+    item_pedido.delete()
+    messages.success(request, 'Item removido com sucesso!')
+    return redirect('detalhes_pedido', id=pedido.id)
 
+def remover_pedido(request, id):
+    try:
+        pedido = Pedido.objects.get(pk=id)
+    except Pedido.DoesNotExist:
+        messages.error(request, 'Pedido não encontrado')
+        return redirect('pedido')
+
+    # devolve os itens ao estoque antes de remover
+    for item in pedido.itempedido_set.all():
+        estoque = item.produto.estoque
+        estoque.qtde += item.qtde
+        estoque.save()
+        item.delete()
+
+    pedido.delete()
+    messages.success(request, 'Pedido removido com sucesso!')
+    return redirect('pedido')
