@@ -2,7 +2,10 @@ from django.db import models
 from django.core.exceptions import ValidationError
 import base64
 from io import BytesIO
+from decimal import Decimal
 from PIL import Image
+import random
+import string
 
 
 class Categoria(models.Model):
@@ -87,15 +90,68 @@ class Pedido(models.Model):
     data_pedido = models.DateTimeField(auto_now_add=True)
     status = models.IntegerField(choices=STATUS_CHOICES, default=NOVO)
 
+    # 🔹 Campos extras para Nota Fiscal
+    chave_acesso = models.CharField(max_length=44, blank=True, null=True)
+    icms = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    ipi = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    pis = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    cofins = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
     @property
     def data_pedidof(self):
         if self.data_pedido:
             return self.data_pedido.strftime('%d/%m/%Y %H:%M')
         return None
 
+    @property
     def total(self):
         """Calcula o valor total do pedido"""
-        return sum(item.subtotal() for item in self.itempedido_set.all())
+        return sum(item.subtotal for item in self.itempedido_set.all())
+
+    @property
+    def total_impostos(self):
+        """Soma de todos os impostos"""
+        return self.icms + self.ipi + self.pis + self.cofins
+
+    @property
+    def total_com_impostos(self):
+        """Valor final com impostos"""
+        return self.total + self.total_impostos
+
+    @property
+    def pagamentos(self):
+        """Lista de todos os pagamentos realizados"""
+        return self.pagamento_set.all()
+
+    @property
+    def total_pago(self):
+        """Calcula o total de todos os pagamentos do pedido"""
+        return sum(pagamento.valor for pagamento in self.pagamentos)
+
+    @property
+    def debito(self):
+        """Calcula o débito (quanto falta pagar)"""
+        return max(self.total - self.total_pago, 0)
+
+    def gerar_chave_acesso(self):
+        """Gera uma chave de acesso de 44 dígitos"""
+        self.chave_acesso = ''.join(random.choices(string.digits, k=44))
+
+    def calcular_impostos(self):
+        """Calcula impostos com base no total do pedido"""
+        self.icms = self.total * Decimal('0.18')   # 18% ICMS
+        self.ipi = self.total * Decimal('0.04')    # 4% IPI
+        self.pis = self.total * Decimal('0.0165')  # 1,65% PIS
+        self.cofins = self.total * Decimal('0.076') # 7,6% COFINS
+
+    def save(self, *args, **kwargs):
+        # Gera chave de acesso se não existir
+        if not self.chave_acesso:
+            self.gerar_chave_acesso()
+        # Só calcula impostos se já tiver PK (pedido salvo) e itens
+        if self.pk:
+            self.calcular_impostos()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Pedido {self.id} - Cliente: {self.cliente.nome} - Status: {self.get_status_display()}"
@@ -107,9 +163,36 @@ class ItemPedido(models.Model):
     qtde = models.PositiveIntegerField()
     preco = models.DecimalField(max_digits=10, decimal_places=2)
 
+    @property
     def subtotal(self):
         """Calcula o valor total deste item"""
         return self.qtde * self.preco
 
     def __str__(self):
         return f"{self.produto.nome} (Qtd: {self.qtde}) - Preço Unitário: {self.preco}"
+
+
+class Pagamento(models.Model):
+    DINHEIRO = 1
+    CARTAO = 2
+    PIX = 3
+    OUTRA = 4
+
+    FORMA_CHOICES = [
+        (DINHEIRO, 'Dinheiro'),
+        (CARTAO, 'Cartão'),
+        (PIX, 'Pix'),
+        (OUTRA, 'Outra'),
+    ]
+
+    pedido = models.ForeignKey(Pedido, on_delete=models.CASCADE)
+    forma = models.IntegerField(choices=FORMA_CHOICES)
+    valor = models.DecimalField(max_digits=10, decimal_places=2, blank=False)
+    data_pgto = models.DateTimeField(auto_now_add=True)
+
+    @property
+    def data_pgtof(self):
+        """Retorna a data no formato DD/MM/AAAA HH:MM"""
+        if self.data_pgto:
+            return self.data_pgto.strftime('%d/%m/%Y %H:%M')
+        return None

@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block titulo_conteudo %}
+    {% if form.instance.pk %}
+        <h1>Editar Pagamento</h1>
+    {% else %}
+        <h1>Registrar Pagamento</h1>
+    {% endif %}
+{% endblock titulo_conteudo %}
+
+{% block conteudo %}
+<div class="container mt-4">
+    <p><strong>Pedido:</strong> #{{ pedido.id }} - Cliente: {{ pedido.cliente.nome }}</p>
+    <p><strong>Total do Pedido:</strong> R$ {{ pedido.total }}</p>
+    <p><strong>Total Pago:</strong> R$ {{ pedido.total_pago }}</p>
+    <p><strong>Débito Restante:</strong> R$ {{ pedido.debito }}</p>
+
+    <hr>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            {{ form.valor.label_tag }}
+            {{ form.valor }}
+            {% if form.valor.errors %}
+                <div class="text-danger">{{ form.valor.errors }}</div>
+            {% endif %}
+        </div>
+
+        <div class="mb-3">
+            {{ form.forma.label_tag }}
+            {{ form.forma }}
+            {% if form.forma.errors %}
+                <div class="text-danger">{{ form.forma.errors }}</div>
+            {% endif %}
+        </div>
+
+        <button type="submit" class="btn btn-success">
+            {% if form.instance.pk %}
+                Atualizar Pagamento
+            {% else %}
+                Registrar Pagamento
+            {% endif %}
+        </button>
+        <a href="{% url 'detalhes_pedido' pedido.id %}" class="btn btn-secondary">Voltar</a>
+    </form>
+</div>
+{% endblock conteudo %}

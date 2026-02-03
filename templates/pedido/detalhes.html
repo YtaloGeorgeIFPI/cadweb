@@ -6,6 +6,17 @@
 
 {% block conteudo %}
 
+<!-- Mensagens de sucesso/erro -->
+{% if messages %}
+  <div>
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }}">
+        {{ message }}
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
 <p><strong>Cliente:</strong> {{ pedido.cliente.nome }}</p>
 <p><strong>Data do Pedido:</strong> {{ pedido.data_pedidof }}</p>
 <p><strong>Status:</strong> {{ pedido.get_status_display }}</p>
@@ -25,8 +36,14 @@
     </p>
     {{ form.as_p }}
     <button type="submit" class="btn btn-primary btn-sm">Salvar Produto</button>
-    <button type="button" onclick="location=''" class="btn btn-secondary btn-sm">Registrar Pagamento</button>
 </form>
+
+<!-- Botão Registrar Pagamento -->
+<button type="button"
+        onclick="location.href='{% url 'novo_pagamento' pedido.id %}'"
+        class="btn btn-secondary btn-sm mt-2">
+    Registrar Pagamento
+</button>
 
 <hr>
 <!-- Tabela de Itens já adicionados ao pedido -->
@@ -74,24 +91,45 @@
     </tbody>
 </table>
 
-<!-- Total do pedido -->
+<!-- Totais -->
 <p class="mt-3"><strong>Total do Pedido:</strong> R$ {{ pedido.total }}</p>
+<p><strong>Total Pago:</strong> R$ {{ pedido.total_pago }}</p>
+<p><strong>Débito Restante:</strong> R$ {{ pedido.debito }}</p>
+
+<hr>
+<!-- Tabela de Pagamentos -->
+<h5>Pagamentos</h5>
+<table class="table table-bordered">
+    <thead class="table-dark">
+        <tr>
+            <th>ID</th>
+            <th>Forma</th>
+            <th>Valor</th>
+            <th>Data</th>
+            <th>Ações</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for pagamento in pagamentos %}
+        <tr>
+            <td>{{ pagamento.id }}</td>
+            <td>{{ pagamento.get_forma_display }}</td>
+            <td>R$ {{ pagamento.valor }}</td>
+            <td>{{ pagamento.data_pgtof }}</td>
+            <td>
+                <a href="{% url 'editar_pagamento' pagamento.id %}" class="btn btn-warning btn-sm">Editar</a>
+                <a href="{% url 'remover_pagamento' pagamento.id %}" class="btn btn-danger btn-sm"
+                   onclick="return confirm('Tem certeza que deseja remover este pagamento?');">
+                   Remover
+                </a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5" class="text-center">Nenhum pagamento registrado.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 
 {% endblock conteudo %}
-
-{% block javascript %}
-<script>
-    $('#confirm-btn').confirmation({
-      rootSelector: '#confirm-btn',
-      title: 'Você tem certeza?',
-      btnOkLabel: 'Sim',
-      btnCancelLabel: 'Não',
-      onConfirm: function() {
-        alert('Confirmado!');
-      },
-      onCancel: function() {
-        alert('Cancelado!');
-      }
-    });
-</script>
-{% endblock javascript %}

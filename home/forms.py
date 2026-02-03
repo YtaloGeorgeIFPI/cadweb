@@ -1,6 +1,6 @@
 from django import forms
-from .models import Categoria, Cliente, Produto, Estoque, Pedido, ItemPedido  # Certifique-se de importar os modelos Categoria, Cliente e Produto
-from datetime import date  # Importando o módulo date para comparar com a data atual
+from .models import Categoria, Cliente, Produto, Estoque, Pedido, ItemPedido, Pagamento
+from datetime import date
 
 # Formulário para Categoria
 class CategoriaForm(forms.ModelForm):
@@ -33,12 +33,11 @@ class ClienteForm(forms.ModelForm):
         widgets = {
             'nome': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nome'}),
             'cpf': forms.TextInput(attrs={'class': 'cpf form-control', 'placeholder': 'C.P.F'}),
-            'datanasc': forms.DateInput(attrs={'class': 'data form-control', 'placeholder': 'Data de Nascimento'}, format='%Y-%m-%d'),  # Formato no padrão HTML5
+            'datanasc': forms.DateInput(attrs={'class': 'data form-control', 'placeholder': 'Data de Nascimento'}, format='%Y-%m-%d'),
         }
 
     def clean_cpf(self):
         cpf = self.cleaned_data.get('cpf')
-        # Validação simples para o formato do CPF (ajustar conforme necessário)
         if len(cpf) != 14 or not cpf.replace('.', '').replace('-', '').isdigit():
             raise forms.ValidationError("O CPF deve ser válido (formato: XXX.XXX.XXX-XX).")
         return cpf
@@ -51,10 +50,8 @@ class ClienteForm(forms.ModelForm):
 
     def clean_datanasc(self):
         datanasc = self.cleaned_data.get('datanasc')
-        # Validação para garantir que a data de nascimento não seja anterior a 1900
         if datanasc and datanasc.year < 1900:
             raise forms.ValidationError("A data de nascimento não pode ser anterior a 1900.")
-        # Validação para garantir que a data de nascimento não seja maior que a data atual
         if datanasc and datanasc > date.today():
             raise forms.ValidationError("A data de nascimento não pode ser maior que a data atual.")
         return datanasc
@@ -64,23 +61,13 @@ class ClienteForm(forms.ModelForm):
 class ProdutoForm(forms.ModelForm):
     class Meta:
         model = Produto
-        fields = ['nome', 'preco', 'categoria', 'img_base64']  # Inclui 'categoria' como campo visível
-
+        fields = ['nome', 'preco', 'categoria', 'img_base64']
         widgets = {
-           # 'categoria': forms.Select(attrs={'class': 'form-control'}),  # Usando o campo Select para exibir a categoria visível
             'categoria': forms.HiddenInput(),
-            'nome': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Nome'
-            }),
+            'nome': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nome'}),
             'img_base64': forms.HiddenInput(),
-            'preco': forms.TextInput(attrs={
-                'class': 'money form-control',
-                'maxlength': 500,
-                'placeholder': '0.000,00'
-            }),
+            'preco': forms.TextInput(attrs={'class': 'money form-control', 'maxlength': 500, 'placeholder': '0.000,00'}),
         }
-
         labels = {
             'nome': 'Nome do Produto',
             'preco': 'Preço do Produto',
@@ -90,16 +77,15 @@ class ProdutoForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['preco'].localize = True
         self.fields['preco'].widget.is_localized = True
-        
+
 
 # Formulário para Estoque
 class EstoqueForm(forms.ModelForm):
     class Meta:
         model = Estoque
-        fields = ['produto','qtde']
-
+        fields = ['produto', 'qtde']
         widgets = {
-            'produto': forms.HiddenInput(),  # Campo oculto para armazenar o ID do produto
+            'produto': forms.HiddenInput(),
             'qtde': forms.TextInput(attrs={'class': 'inteiro form-control'}),
         }
 
@@ -109,17 +95,53 @@ class PedidoForm(forms.ModelForm):
         model = Pedido
         fields = ['cliente']
         widgets = {
-            'cliente': forms.HiddenInput(),  # Campo oculto para armazenar o ID
+            'cliente': forms.HiddenInput(),
         }
+
 
 class ItemPedidoForm(forms.ModelForm):
     class Meta:
         model = ItemPedido
-        fields = ['pedido','produto', 'qtde']
-
-
+        fields = ['pedido', 'produto', 'qtde']
         widgets = {
-            'pedido': forms.HiddenInput(),  # Campo oculto para armazenar o ID
-            'produto': forms.HiddenInput(),  # Campo oculto para armazenar o ID
-            'qtde':forms.TextInput(attrs={'class': 'form-control',}),
+            'pedido': forms.HiddenInput(),
+            'produto': forms.HiddenInput(),
+            'qtde': forms.TextInput(attrs={'class': 'form-control'}),
         }
+
+
+# Formulário para Pagamento
+class PagamentoForm(forms.ModelForm):
+    class Meta:
+        model = Pagamento
+        fields = ['forma', 'valor']  # 🔹 removemos 'pedido'
+        widgets = {
+            'forma': forms.Select(attrs={'class': 'form-control'}),
+            'valor': forms.TextInput(attrs={'class': 'money form-control', 'maxlength': 500, 'placeholder': '0.000,00'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super(PagamentoForm, self).__init__(*args, **kwargs)
+        self.fields['valor'].localize = True
+        self.fields['valor'].widget.is_localized = True
+
+    def clean_valor(self):
+        valor = self.cleaned_data.get('valor')
+        pedido = getattr(self.instance, 'pedido', None)
+
+        if valor is None:
+            raise forms.ValidationError("Informe um valor válido.")
+
+        if valor <= 0:
+            raise forms.ValidationError("O valor deve ser maior que zero.")
+
+        if pedido:
+            # Se for edição, considerar o valor anterior
+            valor_anterior = self.instance.valor if self.instance.pk else 0
+            limite = pedido.debito + valor_anterior
+            if valor > limite:
+                raise forms.ValidationError(
+                    f"O valor não pode ser maior que o débito restante (máx permitido: {limite})."
+                )
+
+        return valor
